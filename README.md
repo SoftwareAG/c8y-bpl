@@ -5,7 +5,7 @@
 c8y-cli extension to handle tasks for build pipeline
 
 Checkout the [go-c8y-cli extension docs](https://feat-extensions-manager--goc8ycli.netlify.app/docs/tutorials/extensions/creating-an-extension/) for detailed instruction.
-Checkout the [Official Cumulocity API Documentation](https://cumulocity.com/api/oee/#operation/getProductionPlanList) for more details.
+Checkout the [Official OEE API Documentation](https://cumulocity.com/api/oee) for more details.
 
 ## What is included?
 
