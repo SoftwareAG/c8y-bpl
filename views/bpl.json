@@ -1,0 +1,21 @@
+{
+    "$schema": "https://raw.githubusercontent.com/reubenmiller/go-c8y-cli/feat/extensions-manager/tools/schema/views.json",
+    "version": "v1",
+    "definitions": [
+        {
+            "name": "microservices",
+            "priority": 400,
+            "requestPath": "/application/applications",
+            "columns": [
+                "id",
+                "name",
+                "key",
+                "type",
+                "availability",
+                "owner",
+                "version",
+                "apiVersion"
+            ]
+        }
+    ]
+}
