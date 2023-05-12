@@ -11,10 +11,7 @@
                 "name",
                 "key",
                 "type",
-                "availability",
-                "owner",
-                "version",
-                "apiVersion"
+                "tenant:owner.tenant.id"
             ]
         }
     ]

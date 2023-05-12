@@ -1,0 +1,118 @@
+#!/usr/bin/env bash
+export LC_ALL=C.UTF-8
+help() {
+  cat <<EOF
+
+----------------------------------------------------------------------------------------------------------
+HELP MESSAGE:
+    Usage: c8y bpl $(basename "$0") <commands> --id <microservice-id>
+    Commands:
+      subscribe           Subscribe tenant to microservice
+      unsubscribe         Unsubscribe tenant to microservice
+      help                Show this help message and exit
+    Arguments:
+      -i, --id      ID    The ID of the application/microservice (required)
+      -h, --help          Show this help message and exit
+
+    Example usage:
+    Subscribe current tenant to microservice with id 12345 oee-apama:
+        c8y bpl subscribe --id 12345
+    Subscribe current tenant to microservice with name oee-apama:
+        c8y bpl subscribe --id "oee-apama"
+----------------------------------------------------------------------------------------------------------
+
+EOF
+}
+get_microservice_info() {
+  local id="$1"
+  local output=$(c8y microservices get --id "$id" 2>&1)
+  local name=$(echo "$output" | sed -n 's/.*"name":"\([^"]*\).*/\1/p')
+  local type=$(echo "$output" | sed -n 's/.*"type":"\([^"]*\).*/\1/p')
+  local type_lowercase=$(echo "$type" | tr '[:upper:]' '[:lower:]')
+}
+
+subscribe() {
+  local id=$1
+  local info=($(get_microservice_info "$id"))
+  local name="${info[0]}"
+  local type="${info[1]}"
+  response=$(c8y microservices enable --id "$id" )
+  if [[ -z $response ]]; then
+    exit 1
+  fi
+  echo "Subscription finished"
+  exit 0
+}
+
+unsubscribe() {
+  local id=$1
+  local info=($(get_microservice_info "$id"))
+  local name="${info[0]}"
+  local type="${info[1]}"
+  response=$(c8y microservices disable --id "$id" )
+  # try to export response
+  echo "response: $latest_msg"
+  if [[ -z $response ]]; then
+    exit 1
+  fi
+  echo "Unsubscription finished"
+  exit 0
+}
+
+command="$1"
+shift
+
+# Parse command-line options
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -i|--id|-id)
+      if [[ $# -gt 1 ]]; then
+        id="$2"
+        shift
+      else
+        echo "Option $1 requires an argument." >&2
+        exit 1
+      fi
+      ;;
+    -h|--help)
+      help
+      exit 0
+      ;;
+    *)
+      echo "Invalid option or argument: $1" >&2
+      help
+      exit 1
+      ;;
+  esac
+  shift
+done
+
+# Execute the command
+case "$command" in
+  subscribe)
+    if [[ -z "$id" ]]; then
+      echo "Option --id is required for the 'subscribe' command." >&2
+      exit 1
+    fi
+    subscribe "$id"
+    ;;
+
+  unsubscribe)
+    if [[ -z "$id" ]]; then
+      echo "Option --id is required for the 'unsubscribe' command." >&2
+      exit 1
+    fi
+    unsubscribe "$id"
+    ;;
+
+  help|-h|--help)
+    help
+    exit 0
+    ;;
+
+  *)
+    echo "Invalid command." >&2
+    help
+    exit 1
+    ;;
+esac

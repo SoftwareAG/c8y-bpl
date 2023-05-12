@@ -2,7 +2,8 @@
 ---
 group:
   name: microservices
-  description: Manage microservices
+  description: Manage microservices/applications
+  link: https://cumulocity.com/guides/reference/applications/
 
 # Use can use yaml anchors to reduce the amount of boilerplate
 x-types-microservice: &type-microservice
