@@ -17,7 +17,7 @@ HELP MESSAGE:
 
     Example usage:
     Create a user with global roles "OEE Admin" and "business":
-        c8y bpl tenants create --username abctest --password Password.123 --domain dummy-oeeadmin --role admin
+        c8y bpl tenants create --username abctest --password Password.123 --domain dummy-oeeadmin
 ----------------------------------------------------------------------------------------------------------
 
 EOF
