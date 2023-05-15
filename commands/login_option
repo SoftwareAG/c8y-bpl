@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+
+help() {
+  cat <<EOF
+----------------------------------------------------------------------------------------------------------
+HELP MESSAGE:
+    Usage: c8y bpl $(basename "$0") <command> <argument>
+    Commands:
+      remove_restriction        Remove login authentication restriction
+      help                      Show this help message and exit
+    Arguments:
+      -h, --help                Show this help message and exit
+    Example usage:
+    Remove authentication login restriction:
+        c8y bpl login_option remove_restriction
+----------------------------------------------------------------------------------------------------------
+EOF
+}
+
+remove_restriction() {
+  idAndProviderName=$(c8y api -n get /tenant/loginOptions --filter "type like BASIC" --select "id,providerName")
+  echo "idAndProviderName (should look something like '8caad89a-e1a2-4d28-8d31-ae194d3f1dbb,'): $idAndProviderName"
+  exit 0
+}
+
+command="$1"
+shift
+
+# Parse command-line options
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -h|--help)
+      help
+      exit 0
+      ;;
+    *)
+      echo "Invalid option or argument: $1" >&2
+      help
+      exit 1
+      ;;
+  esac
+  shift
+done
+
+# Execute the command
+case "$command" in
+  remove_restriction)
+    missing_args=()
+    if [[ -z "$domain" ]]; then
+      missing_args+=(remove_restriction)
+    fi
+
+    if [[ ${#missing_args[@]} -gt 0 ]]; then
+      message="Error: Missing options required for the 'create' command: ${missing_args[0]}"
+      for (( i=1; i<${#missing_args[@]}; i++ )); do
+        message+=", ${missing_args[$i]}"
+      done
+      echo "$message" >&2
+      help
+      exit 1
+    fi
+
+    remove_restriction
+    ;;
+
+  help|-h|--help)
+    help
+    exit 0
+    ;;
+
+  *)
+    echo "Invalid command." >&2
+    help
+    exit 1
+    ;;
+esac
