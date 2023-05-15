@@ -40,7 +40,7 @@ subscribe() {
   if [[ -z $response ]]; then
     exit 1
   fi
-  echo "Subscription finished"
+  echo "Subscribed successfully."
   exit 0
 }
 
@@ -49,14 +49,14 @@ unsubscribe() {
   local info=($(get_microservice_info "$id"))
   local name="${info[0]}"
   local type="${info[1]}"
-  response=$(c8y microservices disable --id "$id" )
-  # try to export response
-  echo "response: $latest_msg"
-  if [[ -z $response ]]; then
+  response=$(c8y microservices disable --id "$id")
+  exit_code=$?
+  if [ $exit_code -eq 0 ]; then
+    echo "Unsubscribed successfully."
+  else
+    echo "An error occurred, can not finish unsubscribing process."
     exit 1
   fi
-  echo "Unsubscription finished"
-  exit 0
 }
 
 command="$1"
