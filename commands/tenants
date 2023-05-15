@@ -16,7 +16,7 @@ HELP MESSAGE:
       -h, --help                Show this help message and exit
 
     Example usage:
-    Create a user with global roles "OEE Admin" and "business":
+    Create a new subtenant:
         c8y bpl tenants create --username abctest --password Password.123 --domain dummy-oeeadmin
 ----------------------------------------------------------------------------------------------------------
 
