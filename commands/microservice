@@ -22,6 +22,7 @@ HELP MESSAGE:
         c8y bpl subscribe --id "oee-apama"
     Subscribe tenant t1234 to microservice with name oee-apama:
         c8y bpl subscribe --id "oee-apama" --tenant "t1234"
+
     Unsubscribe current tenant from microservice with id 12345 oee-apama:
         c8y bpl unsubscribe --id 12345
     Unsubscribe current tenant from microservice with name oee-apama:
@@ -50,7 +51,12 @@ get_microservice_info() {
 
 subscribe() {
   local id=$1
-  response=$(c8y microservices enable --id "$id" )
+  if [[ "$ignoreAlreadyDone" = true ]]; then
+    response=$(c8y microservices enable --id "$id" --silentStatusCodes=409)
+  else
+    response=$(c8y microservices enable --id "$id" )
+  fi
+
   if [[ -z $response ]]; then
     exit 1
   fi
@@ -62,8 +68,12 @@ subscribe() {
 subscribe_with_tenant_id() {
   local id=$1
   local tenant_id=$2
+  if [[ "$ignoreAlreadyDone" = true ]]; then
+    response=$(c8y tenants enableApplication --tenant "$tenant_id" --application "$id" --silentStatusCodes=409)
+  else
+    response=$(c8y tenants enableApplication --tenant "$tenant_id" --application "$id")
+  fi
 
-  response=$(c8y tenants enableApplication --tenant "$tenant_id" --application "$id")
   if [[ -z $response ]]; then
     exit 1
   fi
@@ -74,13 +84,19 @@ subscribe_with_tenant_id() {
 
 unsubscribe() {
   local id=$1
-  response=$(c8y microservices disable --id "$id")
+  if [[ "$ignoreAlreadyDone" = true ]]; then
+    response=$(c8y microservices disable --id "$id" --silentStatusCodes=409)
+  else
+    response=$(c8y microservices disable --id "$id")
+  fi
   exit_code=$?
   if [[ $exit_code -eq 0 ]]; then
     echo "Unsubscribed successfully." >&2
     exit 0
   else
-    echo "An error occurred, can not finish unsubscribing process." >&2
+    if [[ "$ignoreAlreadyDone" != true ]]; then
+      echo "An error occurred, can not finish unsubscribing process." >&2
+    fi
     exit 1
   fi
 }
@@ -89,13 +105,20 @@ unsubscribe_with_tenant_id() {
   local id=$1
   local tenant_id=$2
 
-  response=$(c8y tenants disableApplication --tenant "$tenant_id" --application "$id")
+  if [[ "$ignoreAlreadyDone" = true ]]; then
+    response=$(c8y tenants disableApplication --tenant "$tenant_id" --application "$id" --silentStatusCodes=409)
+  else
+    response=$(c8y tenants disableApplication --tenant "$tenant_id" --application "$id")
+  fi
+
   exit_code=$?
   if [[ $exit_code -eq 0 ]]; then
     echo "Unsubscribed successfully." >&2
     exit 0
   else
-    echo "An error occurred, can not finish unsubscribing process." >&2
+    if [[ "$ignoreAlreadyDone" != true ]]; then
+      echo "An error occurred, can not finish unsubscribing process." >&2
+    fi
     exit 1
   fi
 }
@@ -123,6 +146,9 @@ while [[ $# -gt 0 ]]; do
         echo "Option $1 requires an argument." >&2
         exit 1
       fi
+      ;;
+    --ignoreAlreadyDone|-ignoreAlreadyDone)
+      ignoreAlreadyDone=true
       ;;
     -h|--help)
       help
