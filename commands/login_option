@@ -17,9 +17,56 @@ HELP MESSAGE:
 EOF
 }
 
+extract_id_and_type() {
+    local json_string=$1
+
+    # Remove leading/trailing whitespace
+    local cleaned_string=${json_string#"{"}
+    # Remove curly braces
+    cleaned_string=${cleaned_string%"}"}
+
+    # Extract the "id" value
+    local id=$(grep -o '"id":"[^"]*' <<< "$cleaned_string" | cut -d":" -f2 | tr -d '"')
+
+    # Extract the "providername" value
+    local providerName=$(grep -o '"providername":"[^"]*' <<< "$cleaned_string" | cut -d":" -f2 | tr -d '"')
+
+    # Create an array and add the values
+    local result=()
+    result+=("$id")
+    result+=("$providerName")
+
+    # Return the array
+    echo "${result[@]}"
+}
+
 remove_restriction() {
-  idAndProviderName=$(c8y api -n get /tenant/loginOptions --filter "type like BASIC" --select "id,providerName")
+  idAndProviderName=$(c8y api -n get $C8Y_HOST/tenant/loginOptions --filter "type like BASIC" --select "id,providerName")
   echo "idAndProviderName (should look something like '8caad89a-e1a2-4d28-8d31-ae194d3f1dbb,'): $idAndProviderName"
+  output=$(extract_id_and_type "$idAndProviderName")
+  # Extract the values from the array and remove whitespace
+  id=$(echo "${output[0]}" | tr -d ' ')
+  providerName=$(echo "${output[1]}" | tr -d ' ')
+
+  # Print the extracted values individually
+  echo "ID: $id" >&2
+  echo "Provider Name: $providerName" >&2
+
+  response=$(c8y api -n put $C8Y_HOST/tenant/loginOptions/$id --debug --template "{type: 'BASIC', 'providerName': \"$providerName\", 'id': \"$id\", 'authenticationRestrictions': {'forbiddenClients': []}}")
+  # Check fault if failed to send request
+  if [[ -z $response ]]; then
+    echo "Error: Failed to send request. No response from server." >&2
+    exit 1
+  fi
+
+  # Check fault if request receives error message from server
+  if [[ $response == *"serverError"* || -z $response ]]; then
+    echo "$response"
+    echo "Error: Failed to remove authorization restriction." >&2
+    exit 1
+  fi
+
+  echo "Removed authorization restriction successfully"
   exit 0
 }
 
@@ -46,20 +93,6 @@ done
 case "$command" in
   remove_restriction)
     missing_args=()
-    if [[ -z "$domain" ]]; then
-      missing_args+=(remove_restriction)
-    fi
-
-    if [[ ${#missing_args[@]} -gt 0 ]]; then
-      message="Error: Missing options required for the 'create' command: ${missing_args[0]}"
-      for (( i=1; i<${#missing_args[@]}; i++ )); do
-        message+=", ${missing_args[$i]}"
-      done
-      echo "$message" >&2
-      help
-      exit 1
-    fi
-
     remove_restriction
     ;;
 
