@@ -31,12 +31,15 @@ create_subtenant() {
     response=$(c8y tenants create --domain "$domain" --adminName "$username" --adminPass "$password" --company 'SAG' --contactName 'IoT Extensions' --data 'adminEmail=iot-analytics-mobile-accelerator@softwareag.com' --timeout 300000 --silentStatusCodes=409)
   else
     response=$(c8y tenants create --domain "$domain" --adminName "$username" --adminPass "$password" --company 'SAG' --contactName 'IoT Extensions' --data 'adminEmail=iot-analytics-mobile-accelerator@softwareag.com' --timeout 300000)
+    if [[ -z $response ]]; then
+      exit 1
+    fi
   fi
 
-  if [[ -z $response ]]; then
-    exit 1
+  if [[ -n $response ]]; then
+      echo "New sub-tenant $username is created successfully."
   fi
-  echo "New sub-tenant $username is created successfully."
+
   exit 0
 }
 
