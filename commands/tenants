@@ -29,18 +29,22 @@ create_subtenant() {
   local password="$3"
   if [[ "$ignoreAlreadyDone" == true ]]; then
     response=$(c8y tenants create --domain "$domain" --adminName "$username" --adminPass "$password" --company 'SAG' --contactName 'IoT Extensions' --data 'adminEmail=iot-analytics-mobile-accelerator@softwareag.com' --timeout 300000 --silentStatusCodes=409)
+    exit_code=$?
+    if [[ $exit_code -eq 9 ]]; then
+      exit 0
+    fi
   else
     response=$(c8y tenants create --domain "$domain" --adminName "$username" --adminPass "$password" --company 'SAG' --contactName 'IoT Extensions' --data 'adminEmail=iot-analytics-mobile-accelerator@softwareag.com' --timeout 300000)
-    if [[ -z $response ]]; then
-      exit 1
-    fi
+    exit_code=$?
   fi
 
-  if [[ -n $response ]]; then
-      echo "New sub-tenant $username is created successfully."
+  if [[ $exit_code -eq 0 ]]; then
+    echo "New sub-tenant $username is created successfully." >&2
+    exit 0
   fi
 
-  exit 0
+  echo "New sub-tenant created failed." >&2
+  exit 1
 }
 
 command="$1"
