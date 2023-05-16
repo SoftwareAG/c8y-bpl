@@ -27,7 +27,12 @@ create_subtenant() {
   local domain="$1"
   local username="$2"
   local password="$3"
-  response=$(c8y tenants create --domain "$domain" --adminName "$username" --adminPass "$password" --company 'SAG' --contactName 'IoT Extensions' --data 'adminEmail=iot-analytics-mobile-accelerator@softwareag.com' --timeout 300000)
+  if [[ "$ignoreAlreadyDone" == true ]]; then
+    response=$(c8y tenants create --domain "$domain" --adminName "$username" --adminPass "$password" --company 'SAG' --contactName 'IoT Extensions' --data 'adminEmail=iot-analytics-mobile-accelerator@softwareag.com' --timeout 300000 --silentStatusCodes=409)
+  else
+    response=$(c8y tenants create --domain "$domain" --adminName "$username" --adminPass "$password" --company 'SAG' --contactName 'IoT Extensions' --data 'adminEmail=iot-analytics-mobile-accelerator@softwareag.com' --timeout 300000)
+  fi
+
   if [[ -z $response ]]; then
     exit 1
   fi
@@ -71,6 +76,9 @@ while [[ $# -gt 0 ]]; do
     -h|--help)
       help
       exit 0
+      ;;
+    -ignoreAlreadyDone|--ignoreAlreadyDone)
+      ignoreAlreadyDone=true
       ;;
     *)
       echo "Invalid option or argument: $1" >&2
