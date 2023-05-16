@@ -35,9 +35,17 @@ EOF
 get_microservice_info() {
   local id="$1"
   local output=$(c8y microservices get --id "$id" 2>&1)
+  # Check fault if request receives error message from server
+  if [[ $output == *"ERROR"* || -z $output ]]; then
+    echo "$output" >&2
+    echo "Error: Failed to get microservice info." >&2
+    return
+  fi
   local name=$(echo "$output" | sed -n 's/.*"name":"\([^"]*\).*/\1/p')
   local type=$(echo "$output" | sed -n 's/.*"type":"\([^"]*\).*/\1/p')
   local type_lowercase=$(echo "$type" | tr '[:upper:]' '[:lower:]')
+  echo "$name"
+  echo "$type_lowercase"
 }
 
 subscribe() {
@@ -46,7 +54,7 @@ subscribe() {
   if [[ -z $response ]]; then
     exit 1
   fi
-  echo "Subscribed successfully."
+  echo "Subscribed successfully." >&2
 
   exit 0
 }
@@ -60,7 +68,7 @@ subscribe_with_tenant_id() {
     exit 1
   fi
 
-  echo "Subscribed successfully."
+  echo "Subscribed successfully." >&2
   exit 0
 }
 
@@ -68,11 +76,11 @@ unsubscribe() {
   local id=$1
   response=$(c8y microservices disable --id "$id")
   exit_code=$?
-  if [ $exit_code -eq 0 ]; then
-    echo "Unsubscribed successfully."
+  if [[ $exit_code -eq 0 ]]; then
+    echo "Unsubscribed successfully." >&2
     exit 0
   else
-    echo "An error occurred, can not finish unsubscribing process."
+    echo "An error occurred, can not finish unsubscribing process." >&2
     exit 1
   fi
 }
@@ -82,12 +90,14 @@ unsubscribe_with_tenant_id() {
   local tenant_id=$2
 
   response=$(c8y tenants disableApplication --tenant "$tenant_id" --application "$id")
-  if [[ -z $response ]]; then
+  exit_code=$?
+  if [[ $exit_code -eq 0 ]]; then
+    echo "Unsubscribed successfully." >&2
+    exit 0
+  else
+    echo "An error occurred, can not finish unsubscribing process." >&2
     exit 1
   fi
-
-  echo "Unsubscribed successfully."
-  exit 0
 }
 
 command="$1"
@@ -139,11 +149,15 @@ case "$command" in
     name="${info[0]}"
     type="${info[1]}"
 
+    if [[ $type == "ERROR" ]]; then
+      exit 1
+    fi
+
     if [[ -z "$tenant" ]]; then
-      echo "Subscribe application/microservice $name ($type) to current tenant $C8Y_TENANT"
+      echo "Subscribe $type $name to current tenant $C8Y_TENANT"
       subscribe "$id"
     else
-      echo "Subscribe application/microservice $name ($type) to tenant $tenant"
+      echo "Subscribe $type $name to tenant $tenant"
       subscribe_with_tenant_id "$id" "$tenant"
     fi
     ;;
@@ -158,10 +172,10 @@ case "$command" in
     type="${info[1]}"
 
     if [[ -z "$tenant" ]]; then
-      echo "Unsubscribe application/microservice $name ($type) to current tenant $C8Y_TENANT"
+      echo "Unsubscribe $type $name from current tenant $C8Y_TENANT"
       unsubscribe "$id"
     else
-      echo "Unsubscribe application/microservice $name ($type) to tenant $tenant"
+      echo "Unsubscribe $type $name from tenant $tenant"
       unsubscribe_with_tenant_id "$id" "$tenant"
     fi
     ;;
