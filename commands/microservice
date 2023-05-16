@@ -5,15 +5,16 @@ help() {
 
 ----------------------------------------------------------------------------------------------------------
 HELP MESSAGE:
-    Usage: c8y bpl $(basename "$0") <commands> --id <microservice-id> [--tenant <tenant-id>]
+    Usage: c8y bpl $(basename "$0") <commands> --id <microservice-id> [--tenant <tenant-id>] [--ignoreAlreadyDone]
     Commands:
-      subscribe                 Subscribe tenant to microservice
-      unsubscribe               Unsubscribe tenant to microservice
-      help                      Show this help message and exit
+      subscribe                             Subscribe tenant to microservice
+      unsubscribe                           Unsubscribe tenant to microservice
+      help                                  Show this help message and exit
     Arguments:
-      -i, --id      ID          The ID of the application/microservice (required)
-      -t, --tenant  TENANT_ID   The ID of the tenant
-      -h, --help                Show this help message and exit
+      -i, --id                ID            The ID of the application/microservice (required)
+      -t, --tenant            TENANT_ID     The ID of the tenant
+      -h, --help                            Show this help message and exit
+      --ignoreAlreadyDone                   For subscription, ignore 409 already subscribed response
 
     Example usage:
     Subscribe current tenant to microservice with id 12345 oee-apama:
