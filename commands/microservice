@@ -106,9 +106,7 @@ unsubscribe() {
     echo "Unsubscribed successfully." >&2
     exit 0
   else
-    if [[ "$ignoreAlreadyDone" != true ]]; then
-      echo "An error occurred, can not finish unsubscribing process." >&2
-    fi
+    echo "An error occurred, can not finish unsubscribing process." >&2
     exit 1
   fi
 }
@@ -126,9 +124,7 @@ unsubscribe_with_tenant_id() {
     echo "Unsubscribed successfully." >&2
     exit 0
   else
-    if [[ "$ignoreAlreadyDone" != true ]]; then
-      echo "An error occurred, can not finish unsubscribing process." >&2
-    fi
+    echo "An error occurred, can not finish unsubscribing process." >&2
     exit 1
   fi
 }
