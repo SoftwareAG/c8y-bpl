@@ -41,6 +41,7 @@ subscribe() {
     exit 1
   fi
   echo "Subscribed successfully."
+
   exit 0
 }
 
@@ -68,6 +69,19 @@ unsubscribe() {
     echo "An error occurred, can not finish unsubscribing process."
     exit 1
   fi
+}
+
+unsubscribe_with_tenant_id() {
+  local id=$1
+  local tenant_id=$2
+
+  response=$(c8y tenants disableApplication --tenant "$tenant_id" --application "$id")
+  if [[ -z $response ]]; then
+    exit 1
+  fi
+
+  echo "Unsubscribed successfully."
+  exit 0
 }
 
 command="$1"
@@ -120,10 +134,10 @@ case "$command" in
     type="${info[1]}"
 
     if [[ -z "$tenant" ]]; then
-      echo "Subscribe application/microservice $name to current tenant $C8Y_TENANT"
+      echo "Subscribe application/microservice $name ($type) to current tenant $C8Y_TENANT"
       subscribe "$id"
     else
-      echo "Subscribe application/microservice $name to tenant $tenant"
+      echo "Subscribe application/microservice $name ($type) to tenant $tenant"
       subscribe_with_tenant_id "$id" "$tenant"
     fi
     ;;
@@ -133,7 +147,17 @@ case "$command" in
       echo "Option --id is required for the 'unsubscribe' command." >&2
       exit 1
     fi
-    unsubscribe "$id"
+    info=($(get_microservice_info "$id"))
+    name="${info[0]}"
+    type="${info[1]}"
+
+    if [[ -z "$tenant" ]]; then
+      echo "Unsubscribe application/microservice $name ($type) to current tenant $C8Y_TENANT"
+      unsubscribe "$id"
+    else
+      echo "Unsubscribe application/microservice $name ($type) to tenant $tenant"
+      unsubscribe_with_tenant_id "$id" "$tenant"
+    fi
     ;;
 
   help|-h|--help)
