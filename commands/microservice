@@ -5,20 +5,23 @@ help() {
 
 ----------------------------------------------------------------------------------------------------------
 HELP MESSAGE:
-    Usage: c8y bpl $(basename "$0") <commands> --id <microservice-id>
+    Usage: c8y bpl $(basename "$0") <commands> --id <microservice-id> [--tenant <tenant-id>]
     Commands:
-      subscribe           Subscribe tenant to microservice
-      unsubscribe         Unsubscribe tenant to microservice
-      help                Show this help message and exit
+      subscribe                 Subscribe tenant to microservice
+      unsubscribe               Unsubscribe tenant to microservice
+      help                      Show this help message and exit
     Arguments:
-      -i, --id      ID    The ID of the application/microservice (required)
-      -h, --help          Show this help message and exit
+      -i, --id      ID          The ID of the application/microservice (required)
+      -t, --tenant  TENANT_ID   The ID of the tenant
+      -h, --help                Show this help message and exit
 
     Example usage:
     Subscribe current tenant to microservice with id 12345 oee-apama:
         c8y bpl subscribe --id 12345
     Subscribe current tenant to microservice with name oee-apama:
         c8y bpl subscribe --id "oee-apama"
+    Subscribe tenant t1234 to microservice with name oee-apama:
+        c8y bpl subscribe --id "oee-apama" --tenant "t1234"
 ----------------------------------------------------------------------------------------------------------
 
 EOF
@@ -33,9 +36,6 @@ get_microservice_info() {
 
 subscribe() {
   local id=$1
-  local info=($(get_microservice_info "$id"))
-  local name="${info[0]}"
-  local type="${info[1]}"
   response=$(c8y microservices enable --id "$id" )
   if [[ -z $response ]]; then
     exit 1
@@ -44,15 +44,26 @@ subscribe() {
   exit 0
 }
 
+subscribe_with_tenant_id() {
+  local id=$1
+  local tenant_id=$2
+
+  response=$(c8y tenants enableApplication --tenant "$tenant_id" --application "$id")
+  if [[ -z $response ]]; then
+    exit 1
+  fi
+
+  echo "Subscribed successfully."
+  exit 0
+}
+
 unsubscribe() {
   local id=$1
-  local info=($(get_microservice_info "$id"))
-  local name="${info[0]}"
-  local type="${info[1]}"
   response=$(c8y microservices disable --id "$id")
   exit_code=$?
   if [ $exit_code -eq 0 ]; then
     echo "Unsubscribed successfully."
+    exit 0
   else
     echo "An error occurred, can not finish unsubscribing process."
     exit 1
@@ -68,6 +79,15 @@ while [[ $# -gt 0 ]]; do
     -i|--id|-id)
       if [[ $# -gt 1 ]]; then
         id="$2"
+        shift
+      else
+        echo "Option $1 requires an argument." >&2
+        exit 1
+      fi
+      ;;
+    -t|--tenant|-tenant)
+      if [[ $# -gt 1 ]]; then
+        tenant="$2"
         shift
       else
         echo "Option $1 requires an argument." >&2
@@ -94,7 +114,18 @@ case "$command" in
       echo "Option --id is required for the 'subscribe' command." >&2
       exit 1
     fi
-    subscribe "$id"
+
+    info=($(get_microservice_info "$id"))
+    name="${info[0]}"
+    type="${info[1]}"
+
+    if [[ -z "$tenant" ]]; then
+      echo "Subscribe application/microservice $name to current tenant $C8Y_TENANT"
+      subscribe "$id"
+    else
+      echo "Subscribe application/microservice $name to tenant $tenant"
+      subscribe_with_tenant_id "$id" "$tenant"
+    fi
     ;;
 
   unsubscribe)
