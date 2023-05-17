@@ -25,7 +25,8 @@ EOF
 }
 get_microservice_info() {
   local id="$1"
-  local output=$(c8y microservices get --id "$id" 2>&1)
+  shift
+  local output=$(c8y microservices get --id "$id" "$@" 2>&1)
   local name=$(echo "$output" | sed -n 's/.*"name":"\([^"]*\).*/\1/p')
   local type=$(echo "$output" | sed -n 's/.*"type":"\([^"]*\).*/\1/p')
   local type_lowercase=$(echo "$type" | tr '[:upper:]' '[:lower:]')
@@ -33,10 +34,11 @@ get_microservice_info() {
 
 subscribe() {
   local id=$1
-  local info=($(get_microservice_info "$id"))
+  shift
+  local info=($(get_microservice_info "$id" "$@"))
   local name="${info[0]}"
   local type="${info[1]}"
-  response=$(c8y microservices enable --id "$id" )
+  response=$(c8y microservices enable --id "$id" "$@")
   if [[ -z $response ]]; then
     exit 1
   fi
@@ -46,10 +48,11 @@ subscribe() {
 
 unsubscribe() {
   local id=$1
-  local info=($(get_microservice_info "$id"))
+  shift
+  local info=($(get_microservice_info "$id" "$@"))
   local name="${info[0]}"
   local type="${info[1]}"
-  response=$(c8y microservices disable --id "$id")
+  response=$(c8y microservices disable --id "$id" "$@")
   exit_code=$?
   if [ $exit_code -eq 0 ]; then
     echo "Unsubscribed successfully."
@@ -62,6 +65,7 @@ unsubscribe() {
 command="$1"
 shift
 
+REST_ARGS=()
 # Parse command-line options
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -78,14 +82,15 @@ while [[ $# -gt 0 ]]; do
       help
       exit 0
       ;;
+    --*)
+      REST_ARGS+=("$1")
+      ;;
     *)
-      echo "Invalid option or argument: $1" >&2
-      help
-      exit 1
       ;;
   esac
   shift
 done
+set -- "${REST_ARGS[@]}"
 
 # Execute the command
 case "$command" in
@@ -94,7 +99,7 @@ case "$command" in
       echo "Option --id is required for the 'subscribe' command." >&2
       exit 1
     fi
-    subscribe "$id"
+    subscribe "$id" "$@"
     ;;
 
   unsubscribe)
@@ -102,7 +107,7 @@ case "$command" in
       echo "Option --id is required for the 'unsubscribe' command." >&2
       exit 1
     fi
-    unsubscribe "$id"
+    unsubscribe "$id" "$@"
     ;;
 
   help|-h|--help)
