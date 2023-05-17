@@ -36,7 +36,7 @@ EOF
 }
 get_microservice_info() {
   local id="$1"
-  local output=$(c8y microservices get --id "$id" 2>&1)
+  local output=$(c8y microservices get --id "$id" "$@" 2>&1)
   # Check fault if request receives error message from server
   if [[ $output == *"ERROR"* || -z $output ]]; then
     echo "$output" >&2
@@ -53,13 +53,13 @@ get_microservice_info() {
 subscribe() {
   local id=$1
   if [[ "$ignoreAlreadyDone" = true ]]; then
-    response=$(c8y microservices enable --id "$id" --silentStatusCodes=409)
+    response=$(c8y microservices enable --id "$id" --silentStatusCodes=409 "$@")
     exit_code=$?
     if [[ $exit_code -eq 9 ]]; then
       exit 0
     fi
   else
-    response=$(c8y microservices enable --id "$id")
+    response=$(c8y microservices enable --id "$id" "$@")
     exit_code=$?
   fi
 
@@ -76,13 +76,13 @@ subscribe_with_tenant_id() {
   local id=$1
   local tenant_id=$2
   if [[ "$ignoreAlreadyDone" = true ]]; then
-    response=$(c8y tenants enableApplication --tenant "$tenant_id" --application "$id" --silentStatusCodes=409)
+    response=$(c8y tenants enableApplication --tenant "$tenant_id" --application "$id" --silentStatusCodes=409 "$@")
     exit_code=$?
     if [[ $exit_code -eq 9 ]]; then
       exit 0
     fi
   else
-    response=$(c8y tenants enableApplication --tenant "$tenant_id" --application "$id")
+    response=$(c8y tenants enableApplication --tenant "$tenant_id" --application "$id" "$@")
     exit_code=$?
   fi
 
@@ -98,7 +98,7 @@ subscribe_with_tenant_id() {
 unsubscribe() {
   local id=$1
 
-  response=$(c8y microservices disable --id "$id")
+  response=$(c8y microservices disable --id "$id" "$@")
 
   # exit code 4: app isn't subscribed to the tenant or app is not available
   # exit code 3: tenant id is not available
@@ -116,7 +116,7 @@ unsubscribe_with_tenant_id() {
   local id=$1
   local tenant_id=$2
 
-  response=$(c8y tenants disableApplication --tenant "$tenant_id" --application "$id")
+  response=$(c8y tenants disableApplication --tenant "$tenant_id" --application "$id" "$@")
 
   # exit code 4: app isn't subscribed to the tenant or app is not available
   # exit code 3: tenant id is not available
@@ -162,9 +162,7 @@ while [[ $# -gt 0 ]]; do
       exit 0
       ;;
     *)
-      echo "Invalid option or argument: $1" >&2
-      help
-      exit 1
+      REST_ARGS+=("$1")
       ;;
   esac
   shift
