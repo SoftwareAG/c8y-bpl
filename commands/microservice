@@ -18,18 +18,18 @@ HELP MESSAGE:
 
     Example usage:
     Subscribe current tenant to microservice with id 12345:
-        c8y bpl subscribe --id 12345
+        c8y bpl microservice subscribe --id 12345
     Subscribe current tenant to microservice with name dummyApp:
-        c8y bpl subscribe --id "dummyApp"
+        c8y bpl microservice subscribe --id "dummyApp"
     Subscribe tenant t1234 to microservice with name dummyApp:
-        c8y bpl subscribe --id "dummyApp" --tenant "t1234"
+        c8y bpl microservice subscribe --id "dummyApp" --tenant "t1234"
 
     Unsubscribe current tenant from microservice with id 12345:
-        c8y bpl unsubscribe --id 12345
+        c8y bpl microservice unsubscribe --id 12345
     Unsubscribe current tenant from microservice with name dummyApp:
-        c8y bpl unsubscribe --id "dummyApp"
+        c8y bpl microservice unsubscribe --id "dummyApp"
     Unsubscribe tenant t1234 from microservice with name dummyApp:
-        c8y bpl unsubscribe --id "dummyApp" --tenant "t1234"
+        c8y bpl microservice unsubscribe --id "dummyApp" --tenant "t1234"
 ----------------------------------------------------------------------------------------------------------
 
 EOF
