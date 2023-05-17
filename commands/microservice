@@ -17,19 +17,19 @@ HELP MESSAGE:
       --ignoreAlreadyDone                   For subscription, ignore 409 already subscribed response
 
     Example usage:
-    Subscribe current tenant to microservice with id 12345 oee-apama:
+    Subscribe current tenant to microservice with id 12345:
         c8y bpl subscribe --id 12345
-    Subscribe current tenant to microservice with name oee-apama:
-        c8y bpl subscribe --id "oee-apama"
-    Subscribe tenant t1234 to microservice with name oee-apama:
-        c8y bpl subscribe --id "oee-apama" --tenant "t1234"
+    Subscribe current tenant to microservice with name dummyApp:
+        c8y bpl subscribe --id "dummyApp"
+    Subscribe tenant t1234 to microservice with name dummyApp:
+        c8y bpl subscribe --id "dummyApp" --tenant "t1234"
 
-    Unsubscribe current tenant from microservice with id 12345 oee-apama:
+    Unsubscribe current tenant from microservice with id 12345:
         c8y bpl unsubscribe --id 12345
-    Unsubscribe current tenant from microservice with name oee-apama:
-        c8y bpl unsubscribe --id "oee-apama"
-    Unsubscribe tenant t1234 from microservice with name oee-apama:
-        c8y bpl unsubscribe --id "oee-apama" --tenant "t1234"
+    Unsubscribe current tenant from microservice with name dummyApp:
+        c8y bpl unsubscribe --id "dummyApp"
+    Unsubscribe tenant t1234 from microservice with name dummyApp:
+        c8y bpl unsubscribe --id "dummyApp" --tenant "t1234"
 ----------------------------------------------------------------------------------------------------------
 
 EOF
