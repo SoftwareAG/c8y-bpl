@@ -36,6 +36,7 @@ EOF
 }
 get_microservice_info() {
   local id="$1"
+  shift # remove id from $@
   local output=$(c8y microservices get --id "$id" "$@" 2>&1)
   # Check fault if request receives error message from server
   if [[ $output == *"ERROR"* || -z $output ]]; then
@@ -52,6 +53,7 @@ get_microservice_info() {
 
 subscribe() {
   local id=$1
+  shift # remove id from $@
   if [[ "$ignoreAlreadyDone" = true ]]; then
     response=$(c8y microservices enable --id "$id" --silentStatusCodes=409 "$@")
     exit_code=$?
@@ -75,6 +77,9 @@ subscribe() {
 subscribe_with_tenant_id() {
   local id=$1
   local tenant_id=$2
+  shift # remove id from $@
+  shift # remove tenat_id from $@
+
   if [[ "$ignoreAlreadyDone" = true ]]; then
     response=$(c8y tenants enableApplication --tenant "$tenant_id" --application "$id" --silentStatusCodes=409 "$@")
     exit_code=$?
@@ -97,6 +102,7 @@ subscribe_with_tenant_id() {
 
 unsubscribe() {
   local id=$1
+  shift # Remove id from $@
 
   response=$(c8y microservices disable --id "$id" "$@")
 
@@ -115,7 +121,8 @@ unsubscribe() {
 unsubscribe_with_tenant_id() {
   local id=$1
   local tenant_id=$2
-
+  shift # Remove id from $@
+  shift # Remove tenant_id from $@
   response=$(c8y tenants disableApplication --tenant "$tenant_id" --application "$id" "$@")
 
   # exit code 4: app isn't subscribed to the tenant or app is not available
@@ -133,6 +140,7 @@ unsubscribe_with_tenant_id() {
 command="$1"
 shift
 
+REST_ARGS=()
 # Parse command-line options
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -161,12 +169,15 @@ while [[ $# -gt 0 ]]; do
       help
       exit 0
       ;;
-    *)
+    --*)  # Capture options starting with "--"
       REST_ARGS+=("$1")
+      ;;
+    *)
       ;;
   esac
   shift
 done
+set -- "${REST_ARGS[@]}" # Get all remain arguments which is not listed in the cases above
 
 # Execute the command
 case "$command" in
@@ -176,7 +187,7 @@ case "$command" in
       exit 1
     fi
 
-    info=($(get_microservice_info "$id"))
+    info=($(get_microservice_info "$id" "$@"))
     name="${info[0]}"
     type="${info[1]}"
 
@@ -186,10 +197,10 @@ case "$command" in
 
     if [[ -z "$tenant" ]]; then
       echo "Subscribe $type $name to current tenant $C8Y_TENANT"
-      subscribe "$id"
+      subscribe "$id" "$@"
     else
       echo "Subscribe $type $name to tenant $tenant"
-      subscribe_with_tenant_id "$id" "$tenant"
+      subscribe_with_tenant_id "$id" "$tenant" "$@"
     fi
     ;;
 
@@ -198,16 +209,16 @@ case "$command" in
       echo "Option --id is required for the 'unsubscribe' command." >&2
       exit 1
     fi
-    info=($(get_microservice_info "$id"))
+    info=($(get_microservice_info "$id" "$@"))
     name="${info[0]}"
     type="${info[1]}"
 
     if [[ -z "$tenant" ]]; then
       echo "Unsubscribe $type $name from current tenant $C8Y_TENANT"
-      unsubscribe "$id"
+      unsubscribe "$id" "$@"
     else
       echo "Unsubscribe $type $name from tenant $tenant"
-      unsubscribe_with_tenant_id "$id" "$tenant"
+      unsubscribe_with_tenant_id "$id" "$tenant" "$@"
     fi
     ;;
 
