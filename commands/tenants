@@ -27,14 +27,18 @@ create_subtenant() {
   local domain="$1"
   local username="$2"
   local password="$3"
+  shift # Remove domain from $@
+  shift # Remove username from $@
+  shift # Remove password from $@
+
   if [[ "$ignoreAlreadyDone" == true ]]; then
-    response=$(c8y tenants create --domain "$domain" --adminName "$username" --adminPass "$password" --company 'SAG' --contactName 'IoT Extensions' --data 'adminEmail=iot-analytics-mobile-accelerator@softwareag.com' --timeout 300000 --silentStatusCodes=409)
+    response=$(c8y tenants create --domain "$domain" --adminName "$username" --adminPass "$password" --company 'SAG' --contactName 'IoT Extensions' --data 'adminEmail=iot-analytics-mobile-accelerator@softwareag.com' --timeout 300000 --silentStatusCodes=409 "$@")
     exit_code=$?
     if [[ $exit_code -eq 9 ]]; then
       exit 0
     fi
   else
-    response=$(c8y tenants create --domain "$domain" --adminName "$username" --adminPass "$password" --company 'SAG' --contactName 'IoT Extensions' --data 'adminEmail=iot-analytics-mobile-accelerator@softwareag.com' --timeout 300000)
+    response=$(c8y tenants create --domain "$domain" --adminName "$username" --adminPass "$password" --company 'SAG' --contactName 'IoT Extensions' --data 'adminEmail=iot-analytics-mobile-accelerator@softwareag.com' --timeout 300000 "$@")
     exit_code=$?
   fi
 
@@ -50,6 +54,7 @@ create_subtenant() {
 command="$1"
 shift
 
+REST_ARGS=()
 # Parse command-line options
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -87,14 +92,15 @@ while [[ $# -gt 0 ]]; do
     -ignoreAlreadyDone|--ignoreAlreadyDone)
       ignoreAlreadyDone=true
       ;;
+    --*)
+      REST_ARGS+=("$1")
+      ;;
     *)
-      echo "Invalid option or argument: $1" >&2
-      help
-      exit 1
       ;;
   esac
   shift
 done
+set -- "${REST_ARGS[@]}" # Get all remain arguments which is not listed in the cases above
 
 # Execute the command
 case "$command" in
@@ -120,7 +126,7 @@ case "$command" in
       exit 1
     fi
 
-    create_subtenant "$domain" "$username" "$password"
+    create_subtenant "$domain" "$username" "$password" "$@"
     ;;
 
   help|-h|--help)
