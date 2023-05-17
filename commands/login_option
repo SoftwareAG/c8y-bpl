@@ -41,7 +41,7 @@ extract_id_and_type() {
 }
 
 remove_restriction() {
-  idAndProviderName=$(c8y api -n get $C8Y_HOST/tenant/loginOptions --filter "type like BASIC" --select "id,providerName")
+  idAndProviderName=$(c8y api -n get $C8Y_HOST/tenant/loginOptions --filter "type like BASIC" --select "id,providerName" "$@")
   echo "idAndProviderName (should look something like '8caad89a-e1a2-4d28-8d31-ae194d3f1dbb,'): $idAndProviderName"
   output=$(extract_id_and_type "$idAndProviderName")
   # Extract the values from the array and remove whitespace
@@ -52,7 +52,7 @@ remove_restriction() {
   echo "ID: $id" >&2
   echo "Provider Name: $providerName" >&2
 
-  response=$(c8y api -n put $C8Y_HOST/tenant/loginOptions/$id --debug --template "{type: 'BASIC', 'providerName': \"$providerName\", 'id': \"$id\", 'authenticationRestrictions': {'forbiddenClients': []}}")
+  response=$(c8y api -n put $C8Y_HOST/tenant/loginOptions/$id --debug --template "{type: 'BASIC', 'providerName': \"$providerName\", 'id': \"$id\", 'authenticationRestrictions': {'forbiddenClients': []}}" "$@")
   # Check fault if failed to send request
   if [[ -z $response ]]; then
     echo "Error: Failed to send request. No response from server." >&2
@@ -73,6 +73,7 @@ remove_restriction() {
 command="$1"
 shift
 
+REST_ARGS=()
 # Parse command-line options
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -80,20 +81,21 @@ while [[ $# -gt 0 ]]; do
       help
       exit 0
       ;;
+    --*)
+      REST_ARGS+=("$1")
+      ;;
     *)
-      echo "Invalid option or argument: $1" >&2
-      help
-      exit 1
       ;;
   esac
   shift
 done
+set -- "${REST_ARGS[@]}" # Get all remain arguments which is not listed in the cases above
 
 # Execute the command
 case "$command" in
   remove_restriction)
     missing_args=()
-    remove_restriction
+    remove_restriction "$@"
     ;;
 
   help|-h|--help)
