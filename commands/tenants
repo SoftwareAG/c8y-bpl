@@ -7,13 +7,14 @@ help() {
 HELP MESSAGE:
     Usage: c8y bpl $(basename "$0") <command> --username <username> --password <password> --domain <domain-name>
     Commands:
-      create                    Create new tenant
-      help                      Show this help message and exit
+      create                            Create new tenant
+      help                              Show this help message and exit
     Arguments:
-      -u, --username  USERNAME  The username for the new user (required)
-      -p, --password  PASSWORD  The password for the new user ( Password must have at least 8 characters and no more than 32 and must contain only Latin characters) (required)
-      -d, --domain    DOMAIN    The domain for new sub-tenant (will be included ".latest.stage.c8y.io" automatically. Can contain  lowercase letters, digits, and hyphens; minimum 2 characters) (required)
-      -h, --help                Show this help message and exit
+      -u, --username        USERNAME    The username for the new user (required)
+      -p, --password        PASSWORD    The password for the new user ( Password must have at least 8 characters and no more than 32 and must contain only Latin characters) (required)
+      -d, --domain          DOMAIN      The domain for new sub-tenant (will be included ".latest.stage.c8y.io" automatically. Can contain  lowercase letters, digits, and hyphens; minimum 2 characters) (required)
+      --ignoreAlreadyDone               Option to ignore the error message when the tenant is already created before.
+      -h, --help                        Show this help message and exit
 
     Example usage:
     Create a new subtenant:
