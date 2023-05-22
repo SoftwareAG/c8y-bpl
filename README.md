@@ -8,12 +8,12 @@ Checkout the [go-c8y-cli extension docs](https://feat-extensions-manager--goc8yc
 
 ## What is included?
 
-|Type|Included|Notes|
-|----|:-:|-----|
-|Aliases|🔲||
-|Commands|✅|OEE commands to manage and view profiles and plant data|
-|Templates|✅|OEE specific templates|
-|Views|✅|Custom OEE views|
+| Type      | Included | Notes                                               |
+|-----------|:--------:|-----------------------------------------------------|
+| Aliases   |    🔲    |                                                     |
+| Commands  |    ✅     | Commands to manage and view profiles and plant data |
+| Templates |    🔲    | Specific templates                                  |
+| Views     |    ✅     | Custom views                                        |
 
 ## Pre-requisite
 
@@ -30,5 +30,5 @@ The extension can be installed using the following command.
 c8y extension install namnhatpham/c8y-bpl
 
 # List the available commands
-c8y oee
+c8y bpl
 ```
