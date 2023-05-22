@@ -6,7 +6,7 @@ help() {
 HELP MESSAGE:
     Usage: c8y bpl $(basename "$0") <command> <argument>
     Commands:
-      remove_restriction        Remove login authentication restriction
+      remove_restriction        Removes the restriction that client (web browser, command line, etc.) cannot use BasicAuth as Authentication method
       help                      Show this help message and exit
     Arguments:
       -h, --help                Show this help message and exit
@@ -52,7 +52,7 @@ remove_restriction() {
   echo "ID: $id" >&2
   echo "Provider Name: $providerName" >&2
 
-  response=$(c8y api -n put $C8Y_HOST/tenant/loginOptions/$id --debug --template "{type: 'BASIC', 'providerName': \"$providerName\", 'id': \"$id\", 'authenticationRestrictions': {'forbiddenClients': []}}" "$@")
+  response=$(c8y api -n put $C8Y_HOST/tenant/loginOptions/$id --template "{type: 'BASIC', 'providerName': \"$providerName\", 'id': \"$id\", 'authenticationRestrictions': {'forbiddenClients': []}}" "$@")
   # Check fault if failed to send request
   if [[ -z $response ]]; then
     echo "Error: Failed to send request. No response from server." >&2
