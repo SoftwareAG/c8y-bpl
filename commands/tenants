@@ -48,7 +48,7 @@ create_subtenant() {
     exit 0
   fi
 
-  echo "New sub-tenant created failed." >&2
+  echo "New sub-tenant creation failed." >&2
   exit 1
 }
 
