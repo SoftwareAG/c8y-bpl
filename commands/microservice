@@ -185,15 +185,15 @@ while [[ $# -gt 0 ]]; do
 done
 set -- "${REST_ARGS[@]}" # Get all remain arguments which is not listed in the cases above
 
+# Check id availability
+if [[ -z "$id" ]]; then
+  echo "Option --id is required for the '$command' command." >&2
+  exit 1
+fi
 
 # Execute the command
 case "$command" in
   subscribe)
-    if [[ -z "$id" ]]; then
-      echo "Option --id is required for the 'subscribe' command." >&2
-      exit 1
-    fi
-
     info=($(get_microservice_info "$id" "$@"))
     name="${info[0]}"
     type="${info[1]}"
@@ -212,11 +212,6 @@ case "$command" in
     ;;
 
   unsubscribe)
-    if [[ -z "$id" ]]; then
-      echo "Option --id is required for the 'unsubscribe' command." >&2
-      exit 1
-    fi
-
     info=($(get_microservice_info "$id" "$@"))
     name="${info[0]}"
     type="${info[1]}"
