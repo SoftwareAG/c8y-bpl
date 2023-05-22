@@ -63,6 +63,7 @@ subscribe() {
     # exit code 9: Already subscribed
     exit_code=$?
     if [[ $exit_code -eq 9 ]]; then
+      echo "Already subscribed." >&2
       echo "$return"
       return
     fi
@@ -93,6 +94,7 @@ subscribe_with_tenant_id() {
     # exit code 9: Already subscribed
     exit_code=$?
     if [[ $exit_code -eq 9 ]]; then
+      echo "Already subscribed." >&2
       echo "$return"
       return
     fi
