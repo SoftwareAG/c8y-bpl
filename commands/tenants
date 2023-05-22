@@ -7,14 +7,17 @@ help() {
 HELP MESSAGE:
     Usage: c8y bpl $(basename "$0") <command> --username <username> --password <password> --domain <domain-name>
     Commands:
-      create                            Create new tenant
-      help                              Show this help message and exit
+      create                                    Create new tenant
+      help                                      Show this help message and exit
     Arguments:
-      -u, --username        USERNAME    The username for the new user (required)
-      -p, --password        PASSWORD    The password for the new user ( Password must have at least 8 characters and no more than 32 and must contain only Latin characters) (required)
-      -d, --domain          DOMAIN      The domain for new sub-tenant (will be included ".latest.stage.c8y.io" automatically. Can contain  lowercase letters, digits, and hyphens; minimum 2 characters) (required)
-      --ignoreAlreadyDone               Option to ignore the error message when the tenant is already created before.
-      -h, --help                        Show this help message and exit
+      --adminName           ADMIN_USERNAME      The username for the new user (required)
+      --adminPass           ADMIN_PASSWORD      The password for the new user ( Password must have at least 8 characters and no more than 32 and must contain only Latin characters) (required)
+      --adminEmail          ADMIN_EMAIL         The email of the new user (required)
+      --name                NAME                The name for domain of new sub-tenant (will be included ".latest.stage.c8y.io" automatically. Can contain  lowercase letters, digits, and hyphens; minimum 2 characters) (required)
+      --company             COMPANY             The company name for new sub-tenant
+      --contactName         CONTACT_NAME        The contact name for new sub-tenant
+      --ignoreAlreadyDone                       Option to ignore the error message when the tenant is already created before.
+      -h, --help                                Show this help message and exit
 
     Example usage:
     Create a new subtenant:
@@ -28,12 +31,14 @@ create_subtenant() {
   local domain="$1"
   local username="$2"
   local password="$3"
+  local email="$4"
   shift # Remove domain from $@
   shift # Remove username from $@
   shift # Remove password from $@
+  shift # Remove email from $@
 
   if [[ "$ignoreAlreadyDone" == true ]]; then
-    response=$(c8y tenants create --domain "$domain" --adminName "$username" --adminPass "$password" --company 'SAG' --contactName 'IoT Extensions' --data 'adminEmail=iot-analytics-mobile-accelerator@softwareag.com' --timeout 300000 --silentStatusCodes=409 "$@")
+    response=$(c8y tenants create --domain "$domain" --adminName "$username" --adminPass "$password" --company 'SAG' --contactName 'IoT Extensions' --data "adminEmail=$email" --timeout 300000 --silentStatusCodes=409 "$@")
     exit_code=$?
     if [[ $exit_code -eq 9 ]]; then
       exit 0
@@ -59,7 +64,7 @@ REST_ARGS=()
 # Parse command-line options
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    -d|--domain|-domain)
+    --name)
       if [[ $# -gt 1 ]]; then
         domain="$2.latest.stage.c8y.io"
         shift
@@ -68,7 +73,7 @@ while [[ $# -gt 0 ]]; do
         exit 1
       fi
       ;;
-    -u|--username|-username)
+    --adminName)
       if [[ $# -gt 1 ]]; then
         username="$2"
         shift
@@ -77,9 +82,36 @@ while [[ $# -gt 0 ]]; do
         exit 1
       fi
       ;;
-    -p|--password|-password)
+    --adminPass)
       if [[ $# -gt 1 ]]; then
         password="$2"
+        shift
+      else
+        echo "Option $1 requires an argument." >&2
+        exit 1
+      fi
+      ;;
+    --adminEmail)
+      if [[ $# -gt 1 ]]; then
+        email="$2"
+        shift
+      else
+        echo "Option $1 requires an argument." >&2
+        exit 1
+      fi
+      ;;
+    --company)
+      if [[ $# -gt 1 ]]; then
+        company="$2"
+        shift
+      else
+        echo "Option $1 requires an argument." >&2
+        exit 1
+      fi
+      ;;
+    --contactName)
+      if [[ $# -gt 1 ]]; then
+        contactName="$2"
         shift
       else
         echo "Option $1 requires an argument." >&2
@@ -108,13 +140,16 @@ case "$command" in
   create)
     missing_args=()
     if [[ -z "$domain" ]]; then
-      missing_args+=(domain)
+      missing_args+=(name)
     fi
     if [[ -z "$username" ]]; then
-      missing_args+=(username)
+      missing_args+=(adminName)
     fi
     if [[ -z "$password" ]]; then
-      missing_args+=(password)
+      missing_args+=(adminPass)
+    fi
+    if [[ -z "$email" ]]; then
+      missing_args+=(adminEmail)
     fi
 
     if [[ ${#missing_args[@]} -gt 0 ]]; then
@@ -127,7 +162,7 @@ case "$command" in
       exit 1
     fi
 
-    create_subtenant "$domain" "$username" "$password" "$@"
+    create_subtenant "$domain" "$username" "$password" "$email" "$@"
     ;;
 
   help|-h|--help)
