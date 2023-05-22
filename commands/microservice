@@ -57,6 +57,7 @@ subscribe() {
   local id=$1
   shift # remove id from $@
   local return=0
+
   if [[ "$ignoreAlreadyDone" = true ]]; then
     response=$(c8y microservices enable --id "$id" --silentStatusCodes=409 "$@")
     # exit code 9: Already subscribed
@@ -72,11 +73,12 @@ subscribe() {
 
   if [[ $exit_code -eq 0 ]]; then
     echo "$return"
+    return
   fi
 
   return=1
   echo "$return"
-
+  return
 }
 
 subscribe_with_tenant_id() {
@@ -101,10 +103,12 @@ subscribe_with_tenant_id() {
 
   if [[ $exit_code -eq 0 ]]; then
     echo "$return"
+    return
   fi
 
   return=1
   echo "$return"
+  return
 }
 
 unsubscribe() {
@@ -123,7 +127,7 @@ unsubscribe() {
     local return=1
     echo "$return"
   fi
-}
+  return
 
 unsubscribe_with_tenant_id() {
   local id=$1
@@ -142,6 +146,7 @@ unsubscribe_with_tenant_id() {
     local return=1
     echo "$return"
   fi
+  return
 }
 
 command="$1"
