@@ -132,11 +132,11 @@ unsubscribe() {
 
   if [[ $exit_code -eq 0 ]]; then
     echo "$return"
-  else
-    local return=1
-    echo "$return"
+    return
   fi
 
+  return=1
+  echo "$return"
   return
 }
 #######################################################################################
@@ -196,6 +196,7 @@ if [[ -z "$id" ]]; then
   exit 1
 fi
 
+# Check app/microservice availability
 info=($(get_microservice_info "$@"))
 name="${info[0]}"
 type="${info[1]}"
