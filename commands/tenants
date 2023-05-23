@@ -48,7 +48,7 @@ create_subtenant() {
     response=$(c8y tenants create --domain "$domain" --adminName "$username" --adminPass "$password" --company "$company" --contactName "$contactName" --data "adminEmail=$email" --timeout 300000 --silentStatusCodes=409 "$@")
     exit_code=$?
     if [[ $exit_code -eq 9 ]]; then
-      echo "There is another sub-tenant with the same info existed." >&2
+      echo "A subtenant with the same name $name exists already" >&2
       exit 0
     fi
   else
