@@ -5,7 +5,7 @@ help() {
 
 ----------------------------------------------------------------------------------------------------------
 HELP MESSAGE:
-    Usage: c8y bpl $(basename "$0") <command> --username <username> --password <password> --domain <domain-name>
+    Usage: c8y bpl $(basename "$0") <command> --name <name> --adminPass <admin-password> --adminName <admin-name> --adminEmail <admin-email> [--contactName <contact-name> --company <company>]
     Commands:
       create                                    Create new tenant
       help                                      Show this help message and exit
@@ -20,8 +20,8 @@ HELP MESSAGE:
       -h, --help                                Show this help message and exit
 
     Example usage:
-    Create a new subtenant:
-        c8y bpl tenants create --username abctest --password Password.123 --domain dummy-oeeadmin
+    Create a new subtenant with domain 'dummy-oeeadmin.c8y.instance.com', login name abctest, password Password.123:
+        c8y bpl tenants create --adminName abctest --adminPass Password.123 --adminEmail "abctest@example.com" --name dummy-oeeadmin
 ----------------------------------------------------------------------------------------------------------
 
 EOF
