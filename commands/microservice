@@ -57,10 +57,10 @@ build_command() {
 }
 
 get_microservice_info() {
-  local output=$(c8y microservices get --id "$id" "$@" 2>&1)
+  local output=$(c8y microservices get --id "$id" 2>&1)
   # Check fault if request receives error message from server
   if [[ $output == *"ERROR"* || -z $output ]]; then
-    echo "$output" >&2
+    echo "$output"
     echo "Error: Failed to get microservice info." >&2
     return
   fi
@@ -82,7 +82,6 @@ subscribe() {
     subscribe_command="c8y tenants enableApplication --tenant \"$tenant\" --application \"$id\""
   fi
   subscribe_command=$(build_command "$subscribe_command" "$@")
-  echo "command: $subscribe_command" >&2
 
   response=$(eval "$subscribe_command")
 
@@ -109,13 +108,12 @@ subscribe() {
 unsubscribe() {
   if [[ -z "$tenant" ]]; then
     echo "Unsubscribe $type $name from current tenant $C8Y_TENANT"
-    unsubscribe_command="c8y microservices enable --id \"$id\""
+    unsubscribe_command="c8y microservices disable --id \"$id\""
   else
     echo "Unsubscribe $type $name from tenant $tenant"
     unsubscribe_command="c8y tenants disableApplication --tenant \"$tenant\" --application \"$id\""
   fi
   unsubscribe_command=$(build_command "$unsubscribe_command" "$@")
-  echo "command: $unsubscribe_command" >&2
 
   response=$(eval "$unsubscribe_command")
 
@@ -189,7 +187,7 @@ if [[ -z "$id" ]]; then
   exit 1
 fi
 
-info=($(get_microservice_info "$id" "$@"))
+info=($(get_microservice_info "$@"))
 name="${info[0]}"
 type="${info[1]}"
 
@@ -200,7 +198,10 @@ fi
 # Execute the command
 case "$command" in
   subscribe)
-    return=$(subscribe "$@")
+    return=($(subscribe "$@"))
+
+    # Get the last element which is return result
+    return=${return[-1]}
 
     if [[ $return -eq 0 ]]; then
       echo "Subscribed successfully." >&2
@@ -212,7 +213,10 @@ case "$command" in
     ;;
 
   unsubscribe)
-    return=$(unsubscribe "$@")
+    return=($(unsubscribe "$@"))
+
+    # Get the last element which is return result
+    return=${return[-1]}
 
     if [[ $return -eq 0 ]]; then
       echo "Unsubscribed successfully." >&2
