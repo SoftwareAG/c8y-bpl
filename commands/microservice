@@ -1,0 +1,245 @@
+#!/usr/bin/env bash
+export LC_ALL=C.UTF-8
+help() {
+  cat <<EOF
+
+----------------------------------------------------------------------------------------------------------
+HELP MESSAGE:
+    Usage: c8y bpl $(basename "$0") <commands> --id <microservice-id> [--tenant <tenant-id>] [--ignoreAlreadyDone]
+    Commands:
+      subscribe                             Subscribe tenant to microservice
+      unsubscribe                           Unsubscribe tenant to microservice
+      help                                  Show this help message and exit
+    Arguments:
+      -i, --id                ID            The ID of the application/microservice (required)
+      -t, --tenant            TENANT_ID     The ID of the tenant
+      -h, --help                            Show this help message and exit
+      --ignoreAlreadyDone                   For subscription, ignore 409 already subscribed response
+
+    Example usage:
+    Subscribe current tenant to microservice with id 12345:
+        c8y bpl microservice subscribe --id 12345
+    Subscribe current tenant to microservice with name dummyApp:
+        c8y bpl microservice subscribe --id "dummyApp"
+    Subscribe tenant t1234 to microservice with name dummyApp:
+        c8y bpl microservice subscribe --id "dummyApp" --tenant "t1234"
+
+    Unsubscribe current tenant from microservice with id 12345:
+        c8y bpl microservice unsubscribe --id 12345
+    Unsubscribe current tenant from microservice with name dummyApp:
+        c8y bpl microservice unsubscribe --id "dummyApp"
+    Unsubscribe tenant t1234 from microservice with name dummyApp:
+        c8y bpl microservice unsubscribe --id "dummyApp" --tenant "t1234"
+----------------------------------------------------------------------------------------------------------
+
+EOF
+}
+
+build_command() {
+  local base_command=$1
+  shift
+
+  # Check if ignoreAlreadyDone is set
+  if [[ "$ignoreAlreadyDone" == true ]]; then
+    # Add the silentStatusCodes=409 option to the command
+    base_command+=" --silentStatusCodes=409"
+  fi
+
+  # Check if other arguments are provided
+  if [ $# -ne 0 ]; then
+    for arg in "$@"; do
+      echo "argument: $arg"
+      base_command+=" $arg"
+    done
+  fi
+
+  echo "$base_command"
+}
+
+get_microservice_info() {
+  local output=$(c8y microservices get --id "$id" 2>&1)
+  # Check fault if request receives error message from server
+  if [[ $output == *"ERROR"* || -z $output ]]; then
+    echo "$output"
+    echo "Error: Failed to get microservice info." >&2
+    return
+  fi
+
+  local name=$(echo "$output" | sed -n 's/.*"name":"\([^"]*\).*/\1/p')
+  local type=$(echo "$output" | sed -n 's/.*"type":"\([^"]*\).*/\1/p')
+  local type_lowercase=$(echo "$type" | tr '[:upper:]' '[:lower:]')
+  echo "$name"
+  echo "$type_lowercase"
+}
+
+subscribe() {
+  local return=0
+  if [[ -z "$tenant" ]]; then
+    echo "Subscribe $type $name to current tenant $C8Y_TENANT"
+    subscribe_command="c8y microservices enable --id \"$id\""
+  else
+    echo "Subscribe $type $name to tenant $tenant"
+    subscribe_command="c8y tenants enableApplication --tenant \"$tenant\" --application \"$id\""
+  fi
+  subscribe_command=$(build_command "$subscribe_command" "$@")
+
+  response=$(eval "$subscribe_command")
+
+  exit_code=$?
+
+  if [[ "$ignoreAlreadyDone" = true ]]; then
+    if [[ $exit_code -eq 9 ]]; then
+      echo "Already subscribed." >&2
+      echo "$return"
+      return
+    fi
+  fi
+
+  if [[ $exit_code -eq 0 ]]; then
+    echo "$return"
+    return
+  fi
+
+  return=1
+  echo "$return"
+  return
+}
+
+unsubscribe() {
+  local return=0
+  if [[ -z "$tenant" ]]; then
+    echo "Unsubscribe $type $name from current tenant $C8Y_TENANT"
+    unsubscribe_command="c8y microservices disable --id \"$id\""
+  else
+    echo "Unsubscribe $type $name from tenant $tenant"
+    unsubscribe_command="c8y tenants disableApplication --tenant \"$tenant\" --application \"$id\""
+  fi
+  unsubscribe_command=$(build_command "$unsubscribe_command" "$@")
+
+  response=$(eval "$unsubscribe_command")
+
+  # exit code 4: app is already unsubscribed from the tenant
+  # exit code 3: tenant id is not available
+  exit_code=$?
+
+  if [[ "$ignoreAlreadyDone" = true ]]; then
+    if [[ $exit_code -eq 4 ]]; then
+      echo "$type $name is already unsubscribed." >&2
+      echo "$return"
+      return
+    fi
+  fi
+
+  if [[ $exit_code -eq 0 ]]; then
+    echo "$return"
+    return
+  fi
+
+  return=1
+  echo "$return"
+  return
+}
+#######################################################################################
+command="$1"
+shift
+
+REST_ARGS=()
+# Parse command-line options
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -i|--id|-id)
+      if [[ $# -gt 1 ]]; then
+        id="$2"
+        shift
+      else
+        echo "Option $1 requires an argument." >&2
+        exit 1
+      fi
+      ;;
+    -t|--tenant|-tenant)
+      if [[ $# -gt 1 ]]; then
+        tenant="$2"
+        shift
+      else
+        echo "Option $1 requires an argument." >&2
+        exit 1
+      fi
+      ;;
+    --ignoreAlreadyDone|-ignoreAlreadyDone|--silentStatusCodes=409)
+      ignoreAlreadyDone=true
+      ;;
+    -h|--help)
+      help
+      exit 0
+      ;;
+    --*)  # Capture options starting with "--"
+      REST_ARGS+=("$1")
+      ;;
+    *)
+      ;;
+  esac
+  shift
+done
+set -- "${REST_ARGS[@]}" # Get all remain arguments which is not listed in the cases above
+
+# Check command help first
+case "$command" in
+  help|-h|--help)
+    help
+    exit 0
+    ;;
+esac
+
+# Check id availability
+if [[ -z "$id" ]]; then
+  echo "Option --id is required." >&2
+  exit 1
+fi
+
+# Check app/microservice availability
+info=($(get_microservice_info "$@"))
+name="${info[0]}"
+type="${info[1]}"
+
+if [[ $type == "ERROR" ]]; then
+  exit 1
+fi
+
+# Execute the command
+case "$command" in
+  subscribe)
+    return=($(subscribe "$@"))
+
+    # Get the last element which is return result
+    return=${return[-1]}
+
+    if [[ $return -eq 0 ]]; then
+      echo "Subscribed successfully." >&2
+      exit 0
+    else
+      echo "Subscribe process failed." >&2
+      exit 1
+    fi
+    ;;
+
+  unsubscribe)
+    return=($(unsubscribe "$@"))
+
+    # Get the last element which is return result
+    return=${return[-1]}
+
+    if [[ $return -eq 0 ]]; then
+      echo "Unsubscribed successfully." >&2
+      exit 0
+    else
+      echo "Unsubscribe process failed." >&2
+      exit 1
+    fi
+    ;;
+
+  *)
+    echo "Invalid command." >&2
+    help
+    exit 1
+    ;;
+esac
