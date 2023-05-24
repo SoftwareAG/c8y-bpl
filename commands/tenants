@@ -1,0 +1,198 @@
+#!/usr/bin/env bash
+
+help() {
+  cat <<EOF
+
+----------------------------------------------------------------------------------------------------------
+HELP MESSAGE:
+    Usage: c8y bpl $(basename "$0") <command> --name <name> --adminPass <admin-password> --adminName <admin-name> --adminEmail <admin-email> --company <company> [--contactName <contact-name>]
+    Commands:
+      create                                    Create new tenant
+      help                                      Show this help message and exit
+    Arguments:
+      --adminName           ADMIN_USERNAME      The username for the new user (required)
+      --adminPass           ADMIN_PASSWORD      The password for the new user (Password must have at least 8 characters and no more than 32 and must contain only Latin characters) (required)
+      --adminEmail          ADMIN_EMAIL         The email of the new user (required)
+      --name                NAME                The name for domain of new sub-tenant (Can contain lowercase letters, digits, and hyphens; minimum 2 characters) (required)
+      --company             COMPANY             The company name for new sub-tenant (required)
+      --contactName         CONTACT_NAME        The contact name for new sub-tenant
+      --ignoreAlreadyDone                       Option to ignore the error message when the tenant is already created before.
+      -h, --help                                Show this help message and exit
+
+    Example usage:
+    Create a new subtenant with domain 'dummy-oeeadmin.c8y.instance.com', login name abctest, password Password.123:
+        c8y bpl tenants create --adminName abctest --adminPass Password.123 --adminEmail "abctest@example.com" --name dummy-oeeadmin
+----------------------------------------------------------------------------------------------------------
+
+EOF
+}
+
+create_subtenant() {
+  create_subtenant_command="c8y tenants create --domain \"$domain\" --adminName \"$username\" --adminPass \"$password\" --company \"$company\" --data \"adminEmail=$email\""
+
+  # Check if contactName is provided
+  if [ -n "$contactName" ]; then
+    # Add the contactName option to the command
+    create_subtenant_command+=" --contactName \"$contactName\""
+  fi
+
+  # Check if ignoreAlreadyDone is set
+  if [[ "$ignoreAlreadyDone" == true ]]; then
+    # Add the silentStatusCodes=409 option to the command
+    create_subtenant_command+=" --silentStatusCodes=409"
+  fi
+
+  # Add remaining options and execute the command
+  create_subtenant_command+=" --timeout 300000"
+
+  # Check if other arguments are provided
+  if [ $# -ne 0 ]; then
+    for arg in "$@"; do
+      echo "argument: $arg"
+      create_subtenant_command+=" $arg"
+    done
+  fi
+
+  # Execute create subtenant command c8y-cli
+  response=$(eval "$create_subtenant_command")
+
+  exit_code=$?
+
+  if [[ "$ignoreAlreadyDone" == true ]]; then
+    if [[ $exit_code -eq 9 ]]; then
+      echo "A subtenant with the same name $name already exists" >&2
+    fi
+    exit 0
+  fi
+
+  if [[ $exit_code -eq 0 ]]; then
+    echo "New sub-tenant $name created successfully." >&2
+    exit 0
+  else
+    echo "New sub-tenant creation failed." >&2
+    exit 1
+  fi
+}
+
+command="$1"
+shift
+
+REST_ARGS=()
+# Parse command-line options
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --name)
+      if [[ $# -gt 1 ]]; then
+        domain="$2.latest.stage.c8y.io"
+        shift
+      else
+        echo "Option $1 requires an argument." >&2
+        exit 1
+      fi
+      ;;
+    --adminName)
+      if [[ $# -gt 1 ]]; then
+        username="$2"
+        shift
+      else
+        echo "Option $1 requires an argument." >&2
+        exit 1
+      fi
+      ;;
+    --adminPass)
+      if [[ $# -gt 1 ]]; then
+        password="$2"
+        shift
+      else
+        echo "Option $1 requires an argument." >&2
+        exit 1
+      fi
+      ;;
+    --adminEmail)
+      if [[ $# -gt 1 ]]; then
+        email="$2"
+        shift
+      else
+        echo "Option $1 requires an argument." >&2
+        exit 1
+      fi
+      ;;
+    --company)
+      if [[ $# -gt 1 ]]; then
+        company="$2"
+        shift
+      else
+        echo "Option $1 requires an argument." >&2
+        exit 1
+      fi
+      ;;
+    --contactName)
+      if [[ $# -gt 1 ]]; then
+        contactName="$2"
+        shift
+      else
+        echo "Option $1 requires an argument." >&2
+        exit 1
+      fi
+      ;;
+    -h|--help)
+      help
+      exit 0
+      ;;
+    -ignoreAlreadyDone|--ignoreAlreadyDone|--silentStatusCodes=409)
+      ignoreAlreadyDone=true
+      ;;
+    --*)
+      REST_ARGS+=("$1")
+      ;;
+    *)
+      ;;
+  esac
+  shift
+done
+set -- "${REST_ARGS[@]}" # Get all remain arguments which is not listed in the cases above
+
+# Execute the command
+case "$command" in
+  create)
+    missing_args=()
+    if [[ -z "$domain" ]]; then
+      missing_args+=(name)
+    fi
+    if [[ -z "$username" ]]; then
+      missing_args+=(adminName)
+    fi
+    if [[ -z "$password" ]]; then
+      missing_args+=(adminPass)
+    fi
+    if [[ -z "$email" ]]; then
+      missing_args+=(adminEmail)
+    fi
+    if [[ -z "$company" ]]; then
+      missing_args+=(company)
+    fi
+
+    if [[ ${#missing_args[@]} -gt 0 ]]; then
+      message="Error: Missing options required for the 'create' command: ${missing_args[0]}"
+      for (( i=1; i<${#missing_args[@]}; i++ )); do
+        message+=", ${missing_args[$i]}"
+      done
+      echo "$message" >&2
+      help
+      exit 1
+    fi
+
+    create_subtenant "$@"
+    ;;
+
+  help|-h|--help)
+    help
+    exit 0
+    ;;
+
+  *)
+    echo "Invalid command." >&2
+    help
+    exit 1
+    ;;
+esac
