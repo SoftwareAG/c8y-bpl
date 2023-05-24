@@ -13,7 +13,7 @@ HELP MESSAGE:
       --adminName           ADMIN_USERNAME      The username for the new user (required)
       --adminPass           ADMIN_PASSWORD      The password for the new user (Password must have at least 8 characters and no more than 32 and must contain only Latin characters) (required)
       --adminEmail          ADMIN_EMAIL         The email of the new user (required)
-      --name                NAME                The name for domain of new sub-tenant (Can contain  lowercase letters, digits, and hyphens; minimum 2 characters) (required)
+      --name                NAME                The name for domain of new sub-tenant (Can contain lowercase letters, digits, and hyphens; minimum 2 characters) (required)
       --company             COMPANY             The company name for new sub-tenant (required)
       --contactName         CONTACT_NAME        The contact name for new sub-tenant
       --ignoreAlreadyDone                       Option to ignore the error message when the tenant is already created before.
