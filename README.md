@@ -27,7 +27,7 @@ Checkout the installation instructions via the [online docs](https://feat-extens
 The extension can be installed using the following command.
 
 ```sh
-c8y extension install namnhatpham/c8y-bpl
+c8y extension install softwareag/c8y-bpl
 
 # List the available commands
 c8y bpl

@@ -4,15 +4,16 @@ help() {
   cat <<EOF
 ----------------------------------------------------------------------------------------------------------
 HELP MESSAGE:
-    Usage: c8y bpl $(basename "$0") <command> <argument>
+    Usage: c8y bpl $(basename "$0") <command> <argument> [c8y-universal-arguments]
     Commands:
       remove_restriction        Removes the restriction that client (web browser, command line, etc.) cannot use BasicAuth as Authentication method
       help                      Show this help message and exit
     Arguments:
       -h, --help                Show this help message and exit
+      [any c8y argument]        For example: --timeout 300s; --output json;
     Example usage:
-    Remove authentication login restriction:
-        c8y bpl login_option remove_restriction
+    Remove authentication login restriction and timeout in 300 seconds:
+        c8y bpl login_option remove_restriction --timeout 300s
 ----------------------------------------------------------------------------------------------------------
 EOF
 }
@@ -81,8 +82,13 @@ while [[ $# -gt 0 ]]; do
       help
       exit 0
       ;;
-    --*)
-      REST_ARGS+=("$1")
+    --*)  # Capture options starting with "--"
+      if [[ $# -gt 1 ]]; then
+        REST_ARGS+=("$1 $2") # in case of arguments such as --timeout 300s
+        shift
+      else
+        REST_ARGS+=("$1")
+      fi
       ;;
     *)
       ;;
