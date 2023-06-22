@@ -5,7 +5,7 @@ help() {
 
 ----------------------------------------------------------------------------------------------------------
 HELP MESSAGE:
-    Usage: c8y bpl $(basename "$0") <command> --name <name> --adminPass <admin-password> --adminName <admin-name> --adminEmail <admin-email> --company <company> [--contactName <contact-name>]
+    Usage: c8y bpl $(basename "$0") <command> --name <name> --adminPass <admin-password> --adminName <admin-name> --adminEmail <admin-email> --company <company> [--contactName <contact-name>] [c8y-universal-arguments]
     Commands:
       create                                    Create new tenant
       help                                      Show this help message and exit
@@ -18,10 +18,10 @@ HELP MESSAGE:
       --contactName         CONTACT_NAME        The contact name for new sub-tenant
       --ignoreAlreadyDone                       Option to ignore the error message when the tenant is already created before.
       -h, --help                                Show this help message and exit
-
+      [any c8y argument]                        For example: --timeout 300s; --output json;
     Example usage:
-    Create a new subtenant with domain 'dummy-oeeadmin.c8y.instance.com', login name abctest, password Password.123:
-        c8y bpl tenants create --adminName abctest --adminPass Password.123 --adminEmail "abctest@example.com" --name dummy-oeeadmin
+    Create a new subtenant with domain 'dummy-oeeadmin.c8y.instance.com', login name abctest, password Password.123 and timeout 300 seconds:
+        c8y bpl tenants create --adminName abctest --adminPass Password.123 --adminEmail "abctest@example.com" --name dummy-oeeadmin --timeout 300s
 ----------------------------------------------------------------------------------------------------------
 
 EOF
@@ -142,8 +142,13 @@ while [[ $# -gt 0 ]]; do
     -ignoreAlreadyDone|--ignoreAlreadyDone|--silentStatusCodes=409)
       ignoreAlreadyDone=true
       ;;
-    --*)
-      REST_ARGS+=("$1")
+    --*)  # Capture options starting with "--"
+      if [[ $# -gt 1 ]]; then
+        REST_ARGS+=("$1 $2") # in case of arguments such as --timeout 300s
+        shift
+      else
+        REST_ARGS+=("$1")
+      fi
       ;;
     *)
       ;;

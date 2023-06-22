@@ -5,7 +5,7 @@ help() {
 
 ----------------------------------------------------------------------------------------------------------
 HELP MESSAGE:
-    Usage: c8y bpl $(basename "$0") <commands> --id <microservice-id> [--tenant <tenant-id>] [--ignoreAlreadyDone]
+    Usage: c8y bpl $(basename "$0") <commands> --id <microservice-id> [--tenant <tenant-id>] [--ignoreAlreadyDone] [c8y-universal-arguments]
     Commands:
       subscribe                             Subscribe tenant to microservice
       unsubscribe                           Unsubscribe tenant to microservice
@@ -15,10 +15,11 @@ HELP MESSAGE:
       -t, --tenant            TENANT_ID     The ID of the tenant
       -h, --help                            Show this help message and exit
       --ignoreAlreadyDone                   For subscription, ignore 409 already subscribed response
+      [any c8y argument]                    For example: --timeout 300s; --output json; --silentStatusCodes=409
 
     Example usage:
-    Subscribe current tenant to microservice with id 12345:
-        c8y bpl microservice subscribe --id 12345
+    Subscribe current tenant to microservice with id 12345 and timeout of 300 seconds:
+        c8y bpl microservice subscribe --id 12345 --timeout 300s
     Subscribe current tenant to microservice with name dummyApp:
         c8y bpl microservice subscribe --id "dummyApp"
     Subscribe tenant t1234 to microservice with name dummyApp:
